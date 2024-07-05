@@ -1,6 +1,7 @@
-import React, {CSSProperties, FC, PropsWithChildren, useCallback, useRef} from 'react'
+import React, {CSSProperties, FC, PropsWithChildren, useCallback, useEffect, useRef} from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
+import useWatermark from "./Watermark/useWatermark.ts";
 
 export interface WatermarkProps extends PropsWithChildren {
     style?: CSSProperties
@@ -44,7 +45,44 @@ const Watermark: FC<WatermarkProps> = (props) => {
         return props.getContainer ? props.getContainer() : containerRef.current!;
     }, [containerRef.current, props.getContainer])
 
+    const {generateWatermark} = useWatermark({
+        zIndex,
+        width,
+        height,
+        rotate,
+        image,
+        content,
+        fontStyle,
+        gap,
+        offset,
+        getContainer,
+    })
 
+    useEffect(() => {
+        generateWatermark({
+            zIndex,
+            width,
+            height,
+            rotate,
+            image,
+            content,
+            fontStyle,
+            gap,
+            offset,
+            getContainer,
+        })
+    }, [
+        zIndex,
+        width,
+        height,
+        rotate,
+        image,
+        content,
+        JSON.stringify(props.fontStyle),
+        JSON.stringify(props.gap),
+        JSON.stringify(props.offset),
+        getContainer,
+    ])
 
     return props.children ? (
         <div ref={containerRef}

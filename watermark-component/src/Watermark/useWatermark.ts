@@ -1,5 +1,5 @@
 import {WatermarkProps} from "../main.tsx";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {isNumber, merge} from 'lodash-es'
 
 export type WatermarkOptions = Omit<WatermarkProps, 'className' | 'style' | 'children'>
@@ -15,7 +15,7 @@ const toNumber = (value?: string | number, defaultValue?: number) => {
     return isNumber(numberVal) ? numberVal : defaultValue;
 };
 
-
+// TODO：内容学到一半 https://juejin.cn/book/7294082310658326565/section/7357716604157132835?enter_from=course_center&utm_source=course_center#heading-0
 const defaultOptions = {
     rotate: -20,
     zIndex: 1,
@@ -33,32 +33,101 @@ const defaultOptions = {
 const getMergedOptions = (o: Partial<WatermarkOptions>) => {
     const options = o || {};
 
-    const mergeOptions = {
+    const mergedOptions = {
         ...options,
         rotate: options.rotate || defaultOptions.rotate,
         zIndex: options.zIndex || defaultOptions.zIndex,
         fontStyle: {...defaultOptions.fontStyle, ...options.fontStyle},
         width: toNumber(options.width, options.image ? defaultOptions.width : undefined),
-        height: toNumber(options.height, undefined),
-        getContainer: options.getContainer,
+        height: toNumber(options.height, undefined)!,
+        getContainer: options.getContainer!,
         gap: [
             toNumber(options.gap?.[0], defaultOptions.gap[0]),
             toNumber(options.gap?.[1] || options.gap?.[0], defaultOptions.gap[1]),
-        ]
+        ],
+    } as Required<WatermarkOptions>;
+
+    const mergedOffsetX = toNumber(mergedOptions.offset?.[0], 0)!;
+    const mergedOffsetY = toNumber(mergedOptions.offset?.[1] || mergedOptions.offset?.[0], 0)!;
+    mergedOptions.offset = [mergedOffsetX, mergedOffsetY];
+
+    return mergedOptions;
+};
+
+const getCanvasData = async (
+    options: Required<WatermarkOptions>,
+) => {
+    const {rotate, image, content, fontStyle, gap} = options
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const ratio = window.devicePixelRatio
+
+    const configCanvas = (size: { width: number, height: number }) => {
+        const canvasWidth = gap[0] + size.width
+        const canvasHeight = gap[1] + size.height
+
+        canvas.setAttribute('width', `${canvasWidth * ratio}px`)
+        canvas.setAttribute('height', `${canvasHeight * ratio}px`)
+        canvas.style.width = `${canvasWidth}px`
+        canvas.style.height = `${canvasHeight}px`
+
+        ctx!.translate((canvasWidth * ratio) / 2, (canvasHeight * ratio) / 2)
+        ctx!.scale(ratio, ratio)
+
+        const RotateAngle = (rotate * Math.PI) / 180
+        ctx!.rotate(RotateAngle)
     }
 
-    const mergedOffsetX = toNumber(mergeOptions.offset?.[0], 0)!;
-    const mergedOffsetY = toNumber(mergeOptions.offset?.[1] || mergeOptions.offset?.[0], 0)!;
-    mergeOptions.offset = [mergedOffsetX, mergedOffsetY]
+    const drawText = () => {
 
-    return mergeOptions
-}
+    }
+
+    const drawImage = () => {
+    }
+
+    return image ? drawImage() : drawText()
+};
+
 
 export default function useWatermark(params: WatermarkOptions) {
     const [options, setOptions] = useState(params || {});
+    const mergedOptions = getMergedOptions(options)
+    const watermarkDiv = useRef<HTMLDivElement>()
+
+    const container = mergedOptions.getContainer()
+    const {zIndex, gap} = mergedOptions
 
     function drawWatermark() {
+        if (!container) {
+            return;
+        }
 
+        getCanvasData(mergedOptions).then(({base64Url, width, height}) => {
+            const wmStyle = `
+              width:calc(100% - ${offsetLeft});
+              height:calc(100% - ${offsetTop});
+              position:absolute;
+              top:${offsetTop};
+              left:${offsetLeft};
+              bottom:0;
+              right:0;
+              pointer-events: none;
+              z-index:${zIndex};
+              background-position: 0 0;
+              background-size:${gap[0] + width}px ${gap[1] + height}px;
+              background-repeat: repeat;
+              background-image:url(${base64Url})
+              `;
+
+            if (!watermarkDiv.current) {
+                const div = document.createElement('div')
+                watermarkDiv.current = div
+                container.append(div)
+                container.style.position = 'relative'
+            }
+
+            watermarkDiv.current.setAttribute('style', wmStyle.trim())
+        })
     }
 
     useEffect(() => {

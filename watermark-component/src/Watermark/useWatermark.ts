@@ -15,7 +15,7 @@ const toNumber = (value?: string | number, defaultValue?: number) => {
     return isNumber(numberVal) ? numberVal : defaultValue;
 };
 
-// TODO：内容学到一半 https://juejin.cn/book/7294082310658326565/section/7357716604157132835?enter_from=course_center&utm_source=course_center#heading-0
+// TODO：内容学到一半:到实现getCanvasData的方法 https://juejin.cn/book/7294082310658326565/section/7357716604157132835?enter_from=course_center&utm_source=course_center#heading-0
 const defaultOptions = {
     rotate: -20,
     zIndex: 1,

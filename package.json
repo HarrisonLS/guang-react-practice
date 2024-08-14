@@ -1,8 +1,0 @@
-{
-  "devDependencies": {
-    "@types/babel__core": "^7.20.5"
-  },
-  "dependencies": {
-    "@monaco-editor/react": "^4.6.0"
-  }
-}

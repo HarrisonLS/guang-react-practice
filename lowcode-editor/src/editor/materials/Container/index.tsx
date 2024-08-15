@@ -1,13 +1,15 @@
-import { PropsWithChildren } from 'react';
+import { useMaterailDrop } from '../../hooks/useMaterialDrop';
+import { CommonComponentProps } from '../../interface';
 
-const Container = ({ children }: PropsWithChildren) => {
+const Container = ({ id, children }: CommonComponentProps) => {
+
+    const { canDrop, drop } = useMaterailDrop(['Button', 'Container'], id);
 
     return (
         <div
-            className='border-[1px] border-[#000] min-h-[100px] p-[20px]'
-        >
-            {children}
-        </div>
+            ref={drop}
+            className={`min-h-[100px] p-[20px] ${canDrop ? 'border-[2px] border-[blue]' : 'border-[1px] border-[#000]'}`}
+        >{children}</div>
     )
 }
 
